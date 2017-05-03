@@ -134,6 +134,7 @@ class TextEditorComponent {
     this.decorationsToRender = {
       lineNumbers: null,
       lines: null,
+      text: null,
       highlights: new Map(),
       cursors: [],
       overlays: [],
@@ -559,6 +560,7 @@ class TextEditorComponent {
         tileEndRow,
         screenLines: this.renderedScreenLines.slice(tileStartRow - startRow, tileEndRow - startRow),
         lineDecorations: this.decorationsToRender.lines.slice(tileStartRow - startRow, tileEndRow - startRow),
+        textDecorations: this.decorationsToRender.text.slice(tileStartRow - startRow, tileEndRow - startRow),
         blockDecorations: this.decorationsToRender.blocks.get(tileStartRow),
         highlightDecorations: this.decorationsToRender.highlights.get(tileStartRow),
         displayLayer,
@@ -868,6 +870,7 @@ class TextEditorComponent {
   queryDecorationsToRender () {
     this.decorationsToRender.lineNumbers = []
     this.decorationsToRender.lines = []
+    this.decorationsToRender.text = []
     this.decorationsToRender.overlays.length = 0
     this.decorationsToRender.customGutter.clear()
     this.decorationsToRender.blocks = new Map()
@@ -900,6 +903,9 @@ class TextEditorComponent {
         case 'line':
         case 'line-number':
           this.addLineDecorationToRender(type, decoration, screenRange, reversed)
+          break
+        case 'text':
+          this.addTextDecorationToRender(decoration, screenRange)
           break
         case 'highlight':
           this.addHighlightDecorationToMeasure(decoration, screenRange, marker.id)
@@ -953,6 +959,25 @@ class TextEditorComponent {
       const currentClassName = decorationsToRender[row - renderedStartRow]
       const newClassName = currentClassName ? currentClassName + ' ' + decoration.class : decoration.class
       decorationsToRender[row - renderedStartRow] = newClassName
+    }
+  }
+
+  addTextDecorationToRender (decoration, screenRange) {
+    const renderedStartRow = this.getRenderedStartRow()
+    const renderedEndRow = this.getRenderedEndRow()
+    const rangeStartRow = Math.max(screenRange.start.row, renderedStartRow)
+    const rangeEndRow = Math.min(screenRange.end.row, renderedEndRow - 1)
+    for (let row = rangeStartRow; row <= rangeEndRow; row++) {
+      const decorationState = {}
+      if (decoration.class) decorationState.className = decoration.class
+      if (decoration.style) decorationState.style = decoration.style
+
+      let decorations = this.decorationsToRender.text[row - renderedStartRow]
+      if (decorations == null) {
+        decorations = []
+        this.decorationsToRender.text[row - renderedStartRow] = decorations
+      }
+      decorations.push(decorationState)
     }
   }
 
@@ -3148,7 +3173,7 @@ class LinesTileComponent {
 
   createLines () {
     const {
-      tileStartRow, screenLines, lineDecorations,
+      tileStartRow, screenLines, lineDecorations, textDecorations,
       displayLayer, lineNodesByScreenLineId, textNodesByScreenLineId
     } = this.props
 
@@ -3158,6 +3183,7 @@ class LinesTileComponent {
         screenLine: screenLines[i],
         screenRow: tileStartRow + i,
         lineDecoration: lineDecorations[i],
+        textDecorations: textDecorations[i],
         displayLayer,
         lineNodesByScreenLineId,
         textNodesByScreenLineId
@@ -3169,7 +3195,7 @@ class LinesTileComponent {
 
   updateLines (oldProps, newProps) {
     var {
-      screenLines, tileStartRow, lineDecorations,
+      screenLines, tileStartRow, lineDecorations, textDecorations,
       displayLayer, lineNodesByScreenLineId, textNodesByScreenLineId
     } = newProps
 
@@ -3190,6 +3216,7 @@ class LinesTileComponent {
           screenLine: newScreenLine,
           screenRow: tileStartRow + newScreenLineIndex,
           lineDecoration: lineDecorations[newScreenLineIndex],
+          textDecorations: textDecorations[newScreenLineIndex],
           displayLayer,
           lineNodesByScreenLineId,
           textNodesByScreenLineId
@@ -3208,7 +3235,8 @@ class LinesTileComponent {
         var lineComponent = this.lineComponents[lineComponentIndex]
         lineComponent.update({
           screenRow: tileStartRow + newScreenLineIndex,
-          lineDecoration: lineDecorations[newScreenLineIndex]
+          lineDecoration: lineDecorations[newScreenLineIndex],
+          textDecorations: textDecorations[newScreenLineIndex]
         })
 
         oldScreenLineIndex++
@@ -3224,6 +3252,7 @@ class LinesTileComponent {
               screenLine: newScreenLines[newScreenLineIndex],
               screenRow: tileStartRow + newScreenLineIndex,
               lineDecoration: lineDecorations[newScreenLineIndex],
+              textDecorations: textDecorations[newScreenLineIndex],
               displayLayer,
               lineNodesByScreenLineId,
               textNodesByScreenLineId
@@ -3249,6 +3278,7 @@ class LinesTileComponent {
             screenLine: newScreenLines[newScreenLineIndex],
             screenRow: tileStartRow + newScreenLineIndex,
             lineDecoration: lineDecorations[newScreenLineIndex],
+            textDecorations: textDecorations[newScreenLineIndex],
             displayLayer,
             lineNodesByScreenLineId,
             textNodesByScreenLineId
@@ -3342,6 +3372,24 @@ class LinesTileComponent {
     if (!arraysEqual(oldProps.screenLines, newProps.screenLines)) return true
     if (!arraysEqual(oldProps.lineDecorations, newProps.lineDecorations)) return true
 
+    if (oldProps.textDecorations.length !== newProps.textDecorations.length) return true
+    for (let i = 0; i < oldProps.textDecorations.length; i++) {
+      const oldScreenLineTextDecorations = oldProps.textDecorations[i]
+      const newScreenLineTextDecorations = newProps.textDecorations[i]
+
+      if (oldScreenLineTextDecorations && !newScreenLineTextDecorations) return true
+      if (!oldScreenLineTextDecorations && newScreenLineTextDecorations) return true
+      if (!oldScreenLineTextDecorations && !newScreenLineTextDecorations) continue
+
+      if (oldScreenLineTextDecorations.length !== newScreenLineTextDecorations.length) return true
+      for (let j = 0; j < newScreenLineTextDecorations.length; j++) {
+        const oldTextDecoration = oldScreenLineTextDecorations[j]
+        const newTextDecoration = newScreenLineTextDecorations[j]
+        if (oldTextDecoration.className !== newTextDecoration.className) return true
+        if (!objectsEqual(oldTextDecoration.style, newTextDecoration.style)) return true
+      }
+    }
+
     if (!oldProps.highlightDecorations && newProps.highlightDecorations) return true
     if (oldProps.highlightDecorations && !newProps.highlightDecorations) return true
 
@@ -3403,7 +3451,66 @@ class LineComponent {
     this.element.className = this.buildClassName()
     this.element.dataset.screenRow = screenRow
     lineNodesByScreenLineId.set(screenLine.id, this.element)
+    this.appendContents()
+  }
 
+  update (newProps) {
+    if (this.props.lineDecoration !== newProps.lineDecoration) {
+      this.props.lineDecoration = newProps.lineDecoration
+      this.element.className = this.buildClassName()
+    }
+
+    if (this.props.screenRow !== newProps.screenRow) {
+      this.props.screenRow = newProps.screenRow
+      this.element.dataset.screenRow = newProps.screenRow
+    }
+
+    if (this.shouldRebuildContents(newProps)) {
+      this.props.textDecorations = newProps.textDecorations
+      while (this.element.firstChild) {
+        this.element.firstChild.remove()
+      }
+      this.appendContents()
+    }
+  }
+
+  shouldRebuildContents (newProps) {
+    if (this.props.textDecorations && !newProps.textDecorations) return true
+    if (!this.props.textDecorations && newProps.textDecorations) return true
+    if (!this.props.textDecorations && !newProps.textDecorations) return false
+
+    if (this.props.textDecorations.length !== newProps.textDecorations.length) return true
+    for (let i = 0; i < newProps.textDecorations.length; i++) {
+      const oldTextDecoration = this.props.textDecorations[i]
+      const newTextDecoration = newProps.textDecorations[i]
+      if (oldTextDecoration.className !== newTextDecoration.className) return true
+      if (!objectsEqual(oldTextDecoration.style, newTextDecoration.style)) return true
+    }
+    return false
+  }
+
+  destroy () {
+    const {lineNodesByScreenLineId, textNodesByScreenLineId, screenLine} = this.props
+    if (lineNodesByScreenLineId.get(screenLine.id) === this.element) {
+      lineNodesByScreenLineId.delete(screenLine.id)
+      textNodesByScreenLineId.delete(screenLine.id)
+    }
+
+    this.element.remove()
+  }
+
+  buildClassName () {
+    const {lineDecoration} = this.props
+    let className = 'line'
+    if (lineDecoration != null) className = className + ' ' + lineDecoration
+    return className
+  }
+
+  appendContents () {
+    const {
+      displayLayer,
+      lineNodesByScreenLineId, textNodesByScreenLineId, screenLine
+    } = this.props
     const textNodes = []
     textNodesByScreenLineId.set(screenLine.id, textNodes)
 
@@ -3415,15 +3522,21 @@ class LineComponent {
       const tag = tags[i]
       if (tag !== 0) {
         if (displayLayer.isCloseTag(tag)) {
-          openScopeNode = openScopeNode.parentElement
-        } else if (displayLayer.isOpenTag(tag)) {
-          const newScopeNode = document.createElement('span')
           const className = displayLayer.classNameForTag(tag)
           const style = displayLayer.inlineStyleForTag(tag)
-          if (className) newScopeNode.className = className
-          if (style) Object.assign(newScopeNode.style, style)
-          openScopeNode.appendChild(newScopeNode)
-          openScopeNode = newScopeNode
+          if (className || style) {
+            openScopeNode = openScopeNode.parentElement
+          }
+        } else if (displayLayer.isOpenTag(tag)) {
+          const className = displayLayer.classNameForTag(tag)
+          const style = displayLayer.inlineStyleForTag(tag)
+          if (className || style) {
+            const newScopeNode = document.createElement('span')
+            if (className) newScopeNode.className = className
+            if (style) Object.assign(newScopeNode.style, style)
+            openScopeNode.appendChild(newScopeNode)
+            openScopeNode = newScopeNode
+          }
         } else {
           const textNode = document.createTextNode(lineText.substr(startIndex, tag))
           startIndex = startIndex + tag
@@ -3447,35 +3560,6 @@ class LineComponent {
       this.element.appendChild(textNode)
       textNodes.push(textNode)
     }
-  }
-
-  update (newProps) {
-    if (this.props.lineDecoration !== newProps.lineDecoration) {
-      this.props.lineDecoration = newProps.lineDecoration
-      this.element.className = this.buildClassName()
-    }
-
-    if (this.props.screenRow !== newProps.screenRow) {
-      this.props.screenRow = newProps.screenRow
-      this.element.dataset.screenRow = newProps.screenRow
-    }
-  }
-
-  destroy () {
-    const {lineNodesByScreenLineId, textNodesByScreenLineId, screenLine} = this.props
-    if (lineNodesByScreenLineId.get(screenLine.id) === this.element) {
-      lineNodesByScreenLineId.delete(screenLine.id)
-      textNodesByScreenLineId.delete(screenLine.id)
-    }
-
-    this.element.remove()
-  }
-
-  buildClassName () {
-    const {lineDecoration} = this.props
-    let className = 'line'
-    if (lineDecoration != null) className = className + ' ' + lineDecoration
-    return className
   }
 }
 
@@ -3642,6 +3726,19 @@ function arraysEqual (a, b) {
   if (a.length !== b.length) return false
   for (let i = 0, length = a.length; i < length; i++) {
     if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+function objectsEqual (a, b) {
+  if (a === b) return true
+
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+  if (!arraysEqual(aKeys, bKeys)) return false
+  for (let i = 0; i < aKeys.length; i++) {
+    const key = aKeys[i]
+    if (a[key] !== b[key]) return false
   }
   return true
 }

@@ -1952,7 +1952,7 @@ describe('TextEditorComponent', () => {
   })
 
   describe('text decorations', () => {
-    it('injects spans with custom class names and inline styles based on text decorations', async () => {
+    fit('injects spans with custom class names and inline styles based on text decorations', async () => {
       const {component, element, editor} = buildComponent()
 
       const markerLayer1 = editor.addMarkerLayer()
@@ -1972,7 +1972,7 @@ describe('TextEditorComponent', () => {
         '<span style="font-family: marker2-family;"> </span></span><span style="font-family: marker2-family;">va</span>r sort = function(items) {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace">    </span>if (items.length &lt;= 1) return items;</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace">   </span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
       )
 
       editor.decorateMarker(layer1Marker2, {type: 'text', style: {fontSize: '14px'}})
