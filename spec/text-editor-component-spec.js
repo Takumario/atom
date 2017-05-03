@@ -1959,10 +1959,10 @@ describe('TextEditorComponent', () => {
       const layer1Marker1 = markerLayer1.markBufferRange([[0, 2], [0, 5]])
       const layer1Marker2 = markerLayer1.markBufferRange([[1, 1], [1, 4]])
       const layer1Marker3 = markerLayer1.markBufferRange([[2, 0], [2, 3]])
-      editor.decorateMarker(layer1Marker1, {type: 'text', class: 'marker1-class1'})
-      editor.decorateMarker(layer1Marker1, {type: 'text', class: 'marker1-class2'})
+      const layer1Marker1Decoration1 = editor.decorateMarker(layer1Marker1, {type: 'text', class: 'marker1-class1'})
+      const layer1Marker1Decoration2 = editor.decorateMarker(layer1Marker1, {type: 'text', class: 'marker1-class2'})
       editor.decorateMarker(layer1Marker2, {type: 'text', style: {fontFamily: 'marker2-family'}})
-      editor.decorateMarker(layer1Marker1, {type: 'highlight', class: 'unused', style: {color: 'unused'}}) // Don't use styles and class names from other decoration types.
+      editor.decorateMarker(layer1Marker1, {type: 'highlight', class: 'unused', style: {color: 'red'}}) // Don't use styles and class names from other decoration types.
       await component.getNextUpdatePromise()
       expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
         '<span><span class="syntax--text syntax--plain syntax--null-grammar">va<span class="marker1-class1 marker1-class2">r q</span>uicksort = function () {</span></span>'
@@ -1972,55 +1972,129 @@ describe('TextEditorComponent', () => {
         '<span style="font-family: marker2-family;"> </span></span><span style="font-family: marker2-family;">va</span>r sort = function(items) {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span><span class="leading-whitespace">   ' +
-        '</span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace">    </span>if (items.length &lt;= 1) return items;</span></span>'
       )
 
-      editor.decorateMarker(layer1Marker2, {type: 'text', style: {fontSize: 'marker2-size'}})
+      editor.decorateMarker(layer1Marker2, {type: 'text', style: {fontSize: '14px'}})
       editor.decorateMarker(layer1Marker3, {type: 'text', class: 'marker3-class'})
-      editor.decorateMarker(layer1Marker3, {type: 'text', style: {color: 'marker3-color'}})
+      const layer1Marker3Decoration = editor.decorateMarker(layer1Marker3, {type: 'text', style: {color: 'yellow'}})
       await component.getNextUpdatePromise()
       expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
         '<span><span class="syntax--text syntax--plain syntax--null-grammar">va<span class="marker1-class1 marker1-class2">r q</span>uicksort = function () {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> ' +
-        '<span style="font-family: marker2-family;"> </span></span><span style="font-family: marker2-family;">va</span>r sort = function(items) {</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span style="font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span style="font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span><span class="leading-whitespace">  ' +
-        ' </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class" ' +
+        'style="color: yellow;"><span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
       )
 
-      const layer1Decoration = editor.decorateMarkerLayer(markerLayer1, {type: 'text', class: 'layer-class', style: {color: 'layer-color'}})
-      editor.decorateMarkerLayer(markerLayer1, {type: 'highlight', class: 'layer-class', style: {color: 'layer-color'}}) // Don't use styles and class names from other decoration types.
+      layer1Marker3Decoration.setProperties({type: 'text', style: {color: 'black'}})
       await component.getNextUpdatePromise()
       expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
         '<span><span class="syntax--text syntax--plain syntax--null-grammar">va<span class="marker1-class1 marker1-class2">r q</span>uicksort = function () {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> ' +
-        '<span style="font-family: marker2-family;"> </span></span><span style="font-family: marker2-family;">va</span>r sort = function(items) {</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span style="font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span style="font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span><span class="leading-whitespace">   ' +
-        '</span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class" ' +
+        'style="color: black;"><span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+      )
+
+      const layer1Decoration = editor.decorateMarkerLayer(markerLayer1, {type: 'text', class: 'layer-class', style: {color: 'purple'}})
+      editor.decorateMarkerLayer(markerLayer1, {type: 'highlight', class: 'layer-class', style: {color: 'green'}}) // Don't use styles and class names from other decoration types.
+      await component.getNextUpdatePromise()
+      expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar">va<span class="marker1-class1 ' +
+        'marker1-class2 layer-class" style="color: purple;">r q</span>uicksort = function () {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" style="color: purple; font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span class="layer-class" style="color: purple; font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class" style="color: black;">' +
+        '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
       )
 
       const markerLayer2 = editor.addMarkerLayer()
       const layer2Decoration = editor.decorateMarkerLayer(markerLayer2, {type: 'text', class: 'layer2-class'})
-      markerLayer2.markBufferRange([[0, 0], [0, 1]])
+      const layer2Marker1 = markerLayer2.markBufferRange([[0, 0], [0, 1]])
       await component.getNextUpdatePromise()
       expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
         '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="layer2-class">v</span>a' +
-        '<span class="marker1-class1 marker1-class2 layer-class">r q</span>uicksort = function () {</span></span>'
+        '<span class="marker1-class1 marker1-class2 layer-class" style="color: purple;">r q</span>uicksort = function () {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" ' +
-        'style="font-family: marker2-family;"> </span></span><span class="layer-class" style="font-family: marker2-family;">va</span>r sort = function(items) {</span></span>'
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" style="color: purple; font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span class="layer-class" style="color: purple; font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
       )
       expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
-        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class">' +
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class" style="color: black;">' +
+        '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+      )
+
+      layer2Decoration.setProperties({type: 'text', class: 'layer2-class-2'})
+      await component.getNextUpdatePromise()
+      expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="layer2-class-2">v</span>a' +
+        '<span class="marker1-class1 marker1-class2 layer-class" style="color: purple;">r q</span>uicksort = function () {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" style="color: purple; font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span class="layer-class" style="color: purple; font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class" style="color: black;">' +
+        '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+      )
+
+      layer2Decoration.setPropertiesForMarker(layer2Marker1, {type: 'text', class: 'layer2-marker1'})
+      await component.getNextUpdatePromise()
+      expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="layer2-marker1">v</span>a' +
+        '<span class="marker1-class1 marker1-class2 layer-class" style="color: purple;">r q</span>uicksort = function () {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" style="color: purple; font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span class="layer-class" style="color: purple; font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class" style="color: black;">' +
+        '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+      )
+
+      layer1Marker1Decoration1.destroy()
+      await component.getNextUpdatePromise()
+      expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="layer2-marker1">v</span>a' +
+        '<span class="marker1-class2 layer-class" style="color: purple;">r q</span>uicksort = function () {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span class="layer-class" style="color: purple; font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span class="layer-class" style="color: purple; font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class layer-class" style="color: black;">' +
+        '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
+      )
+
+      layer1Decoration.destroy()
+      await component.getNextUpdatePromise()
+      expect(lineNodeForScreenRow(component, 0).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="layer2-marker1">v</span>a' +
+        '<span class="marker1-class2">r q</span>uicksort = function () {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 1).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="leading-whitespace"> <span style="font-family: marker2-family; ' +
+        'font-size: 14px;"> </span></span><span style="font-family: marker2-family; font-size: 14px;">va</span>r sort = function(items) {</span></span>'
+      )
+      expect(lineNodeForScreenRow(component, 2).innerHTML).toBe(
+        '<span><span class="syntax--text syntax--plain syntax--null-grammar"><span class="marker3-class" style="color: black;">' +
         '<span class="leading-whitespace">   </span></span><span class="leading-whitespace"> </span>if (items.length &lt;= 1) return items;</span></span>'
       )
     })
